@@ -24,8 +24,8 @@ func TestSubCmd(t *testing.T) {
 					t.Log("quit")
 					cancel()
 				}),
-				LogHandle(func(s string) {
-					log.Print(s)
+				LogHandle(func(s []byte) {
+					t.Log(string(s))
 				}),
 			)
 
@@ -42,8 +42,8 @@ func TestSubCmd(t *testing.T) {
 					t.Log("quit 2")
 					cancel()
 				}),
-				LogHandle(func(s string) {
-					log.Print(s)
+				LogHandle(func(s []byte) {
+					log.Print(string(s))
 				}),
 			)
 

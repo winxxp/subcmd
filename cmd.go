@@ -1,12 +1,10 @@
 package subcmd
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"golang.org/x/sync/errgroup"
 	"io"
-	"os"
 	"os/exec"
 	"syscall"
 )
@@ -16,7 +14,7 @@ type Options struct {
 	hideWidows bool
 
 	quit   func()
-	logfun func(string)
+	logfun func([]byte)
 }
 
 type Option func(o *Options)
@@ -40,7 +38,7 @@ func QuitHandle(h func()) Option {
 	}
 }
 
-func LogHandle(h func(string)) Option {
+func LogHandle(h func([]byte)) Option {
 	return func(o *Options) {
 		o.logfun = h
 	}
@@ -77,10 +75,7 @@ func (c *Cmd) Run(ctx context.Context) error {
 		}
 	}()
 
-	r, w, err := os.Pipe()
-	if err != nil {
-		return err
-	}
+	r, w := io.Pipe()
 
 	g.Go(func() error {
 		cmd := exec.CommandContext(ctx2, c.binName, c.opts.args...)
@@ -112,15 +107,11 @@ func (c *Cmd) Run(ctx context.Context) error {
 				}
 				return err
 			} else {
-				lines := bytes.Split(buf[:n], []byte("\n"))
-				for _, line := range lines {
-					if c.opts.logfun != nil {
-						c.opts.logfun(string(line) + "\n")
-					}
+				if c.opts.logfun != nil {
+					c.opts.logfun(buf[:n])
 				}
 			}
 		}
-		return nil
 	})
 
 	return g.Wait()
